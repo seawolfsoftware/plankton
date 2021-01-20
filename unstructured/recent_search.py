@@ -24,5 +24,7 @@ print(rs)
 tweets = list(rs.stream())
 
 # using unidecode to prevent emoji/accents printing
-[print(tweet) for tweet in tweets[0:10]]
-
+if tweets:
+    [print(tweet) for tweet in tweets[0:10]]
+else:
+    print("No matching tweets")
