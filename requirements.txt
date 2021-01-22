@@ -2,7 +2,7 @@ amqp==5.0.3
 beautifulsoup4==4.9.3
 billiard==3.6.3.0
 bs4==0.0.1
-celery==5.0.5
+celery~=4.4.6
 certifi==2020.12.5
 chardet==4.0.0
 click==7.1.2
@@ -27,3 +27,4 @@ urllib3==1.26.2
 v20==3.0.25.0
 vine==5.0.0
 wcwidth==0.2.5
+Django~=3.1.5
