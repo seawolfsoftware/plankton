@@ -1,4 +1,4 @@
 structured/oanda.cfg
 .idea/
 *__pycache__*
-*celerbeat-schedule.db
+*celerybeat-schedule.db
