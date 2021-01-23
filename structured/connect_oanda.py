@@ -1,6 +1,6 @@
-import tpqoa
+import current
 
-oanda = tpqoa.tpqoa('oanda.cfg')
+oanda = current.Current('oanda.cfg')
 
 ins = oanda.get_instruments()
 
