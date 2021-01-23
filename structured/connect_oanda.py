@@ -1,7 +1,10 @@
-import current
+import oanda
 
-oanda = current.Current('oanda.cfg')
+oanda = oanda.Oanda('oanda.cfg')
 
 ins = oanda.get_instruments()
 
-print(ins)
+# print(ins)
+print(oanda.get_account_summary())
+print('\n------------------------\n')
+print(oanda.get_account_details())
