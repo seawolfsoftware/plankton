@@ -2,3 +2,5 @@ structured/oanda.cfg
 .idea/
 *__pycache__*
 *celerybeat-schedule.db
+static/
+rl_crash.dump

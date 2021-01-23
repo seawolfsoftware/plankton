@@ -1,20 +1,16 @@
-import requests
 from bs4 import BeautifulSoup
-import json
 from datetime import datetime
-import lxml
-from celery import app, shared_task
+import requests
 
-# job model
+from celery import shared_task
+from celery.utils.log import get_task_logger
+
 from .models import News
 
-# logging
-from celery.utils.log import get_task_logger
 
 logger = get_task_logger(__name__)
 
 
-# save function
 @shared_task(serializer='json')
 def save_function(article_list):
     """Save articles to the database.
@@ -82,7 +78,6 @@ def save_function(article_list):
     return print('finished')
 
 
-# scraping function
 @shared_task
 def get_rss():
 
@@ -90,21 +85,20 @@ def get_rss():
     try:
         r = requests.get('https://www.scmp.com/rss/320663/feed')
 
-        # parse the data using the XML parser in bs4
+        # parse the data using bs4 XML parser
         soup = BeautifulSoup(r.content, features='xml')
 
         # select the "items" wanted from the data
         articles = soup.findAll('item')
 
-        # for each "item" I want, parse it into a list
+        # for each "item" wanted, parse it into a list
         for a in articles:
             title = a.find('title').text
             link = a.find('link').text
             published_wrong = a.find('pubDate').text
             published = datetime.strptime(published_wrong, '%a, %d %b %Y %H:%M:%S %z')
 
-            # create an "article" object with the data
-            # from each "item"
+            # create an "article" object with the data from each "item"
             article = {
                 'title': title,
                 'link': link,
@@ -117,7 +111,7 @@ def get_rss():
 
         for a in article_list:
             print(a)
-        # after the loop, dump the saved objects into a .txt file
+
         return save_function(article_list)
 
     except Exception as e:

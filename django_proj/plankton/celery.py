@@ -5,8 +5,8 @@ from celery.schedules import crontab
 
 
 # default django settings
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'django_web_scraping_example.settings')
-app = Celery('django_web_scraping_example')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'plankton.settings')
+app = Celery('plankton')
 app.conf.timezone = 'UTC'
 app.config_from_object("django.conf:settings", namespace="CELERY")
 app.autodiscover_tasks()
