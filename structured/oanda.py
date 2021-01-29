@@ -1,5 +1,3 @@
-# Wrapper class for Oanda v20 API utilizing v20 Python package
-
 import v20
 import json
 import configparser
@@ -8,18 +6,16 @@ from v20.transaction import StopLossDetails, ClientExtensions
 from v20.transaction import TrailingStopLossDetails, TakeProfitDetails
 
 
-class Current(object):
-    """ Current is a Python wrapper class for the Oanda v20 API. """
+class Oanda(object):
+    """ Oanda is a Python wrapper class for the Oanda v20 API. """
 
     def __init__(self, conf_file):
         """ Init function is expecting a configuration file with
         the following content:
-
         [oanda]
         account_id = XYZ-ABC-...
         access_token = ZYXCAB...
         account_type = practice (default) or live
-
         Parameters
         ==========
         conf_file: string
@@ -58,7 +54,6 @@ class Current(object):
                      tsl_distance=None, tp_price=None, comment=None,
                      touch=False, suppress=False, ret=False):
         """ Places order with Oanda.
-
         Parameters
         ==========
         instrument: string
@@ -133,19 +128,23 @@ class Current(object):
         if ret is True:
             return order.dict()
 
-    def get_account_summary(self, detailed=False):
-        """ Returns summary data for Oanda account."""
-        if detailed is True:
-            response = self.ctx.account.get(self.account_id)
-        else:
-            response = self.ctx.account.summary(self.account_id)
+    # /v3/accounts/{accountID}
+    def get_account_details(self):
+        """ Returns full details for Account, including trades, positions, orders"""
+        response = self.ctx.account.get(self.account_id)
+        raw = response.get('account')
+        return raw.dict()
+
+    # /v3/accounts/{accountID}/summary
+    def get_account_summary(self):
+        """ Returns summary for Account"""
+        response = self.ctx.account.summary(self.account_id)
         raw = response.get('account')
         return raw.dict()
 
     def get_history(self, instrument, start, end,
                     granularity, price, localize=True):
         """ Retrieves historical data for instrument.
-
         Parameters
         ==========
         instrument: string
@@ -156,7 +155,6 @@ class Current(object):
             a string like 'S5', 'M1' or 'D'
         price: string
             one of 'A' (ask), 'B' (bid) or 'M' (middle)
-
         Returns
         =======
         data: pd.DataFrame
@@ -190,8 +188,12 @@ class Current(object):
 
         return data[['o', 'h', 'l', 'c', 'volume', 'complete']]
 
+    # /v3/accounts/{accountID}/instruments
     def get_instruments(self):
-        """ Retrieves and returns all instruments for the given account. """
+        """ Get the list of tradeable instruments for the given Account.
+        The list of tradeable instruments is dependent on the regulatory
+        division that the Account is located in, thus should be the same
+        for all Accounts owned by a single user. """
         resp = self.ctx.account.instruments(self.account_id)
         instruments = resp.get('instruments')
         instruments = [ins.dict() for ins in instruments]
@@ -199,12 +201,17 @@ class Current(object):
                        for ins in instruments]
         return sorted(instruments)
 
+    # /v3/accounts/{accountID}/openPositions
     def get_positions(self):
-        """ Retrieves and returns positions data. """
+        """ List all open Positions for an Account.
+        An open Position is a Position in an Account that
+        currently has a Trade opened for it. """
         response = self.ctx.position.list_open(self.account_id).body
         positions = [p.dict() for p in response.get('positions')]
         return positions
 
+    # /v3/accounts/{accountID}/pricing
+    # Get pricing information for a specified list of Instruments within an Account.
     def get_prices(self, instrument):
         """ Returns the current BID/ASK prices for instrument. """
         r = self.ctx.pricing.get(self.account_id, instruments=instrument)
@@ -213,14 +220,17 @@ class Current(object):
         ask = float(r['prices'][0]['closeoutAsk'])
         return r['time'], bid, ask
 
+    # /v3/accounts/{accountID}/transactions/{transactionID}
     def get_transaction(self, tid=0):
-        """ Retrieves and returns transaction data. """
+        """ Gets the details of a single Account Transaction. """
         response = self.ctx.transaction.get(self.account_id, tid)
         transaction = response.get('transaction')
         return transaction.dict()
 
+    # /v3/accounts/{accountID}/transactions/sinceid
     def get_transactions(self, tid=0):
-        """ Retrieves and returns transactions data. """
+        """ Gets a range of Transactions for an Account starting
+        at (but not including) a provided Transaction ID. """
         response = self.ctx.transaction.since(self.account_id, id=tid)
         transactions = response.get('transactions')
         transactions = [t.dict() for t in transactions]
@@ -244,6 +254,7 @@ class Current(object):
             except Exception:
                 pass
 
+    # /v3/accounts/{accountID}/instruments/{instrument}/candles
     def retrieve_data(self, instrument, start, end, granularity, price):
         raw = self.ctx.instrument.candles(
             instrument=instrument,
@@ -275,9 +286,9 @@ class Current(object):
             data[col] = data[col].astype(float)
         return data
 
+    # /v3/accounts/{accountID}/pricing/stream
     def stream_data(self, instrument, stop=None, ret=False):
         """ Starts a real-time data stream.
-
         Parameters
         ==========
         instrument: string
@@ -285,8 +296,10 @@ class Current(object):
         """
         self.stream_instrument = instrument
         self.ticks = 0
+
         response = self.ctx_stream.pricing.stream(
-            self.account_id, snapshot=True,
+            self.account_id,
+            snapshot=True,
             instruments=instrument)
         msgs = []
         for msg_type, msg in response.parts():
