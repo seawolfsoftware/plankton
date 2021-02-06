@@ -141,6 +141,15 @@ class Oanda(object):
         response = self.ctx.account.summary(self.account_id)
         raw = response.get('account')
         return raw.dict()
+    #
+    # def get_open_trades(self):
+    #     # /v3/accounts/{accountID}/openTrades
+    #     response = requests.get(api_url + '/v3/accounts/' + account_id + '/openTrades')
+    #
+    #     return response
+    #     # list of trade objects
+    #     # trades = []
+    #     # return trades
 
     def get_history(self, instrument, start, end,
                     granularity, price, localize=True):
