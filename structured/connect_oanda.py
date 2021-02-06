@@ -7,7 +7,10 @@ from pylab import mpl, plt
 
 oanda = oanda.Oanda('oanda.cfg')
 
-print(oanda.account_id)
+print('Account number: ', oanda.account_id, '\n')
+accounts_list = oanda.get_accounts()
+for account in accounts_list:
+    print(account)
 
 # def panic():
 #     trade_ids = get_open_trades()

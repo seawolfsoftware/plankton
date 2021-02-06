@@ -128,29 +128,6 @@ class Oanda(object):
         if ret is True:
             return order.dict()
 
-    # /v3/accounts/{accountID}
-    def get_account_details(self):
-        """ Returns full details for Account, including trades, positions, orders"""
-        response = self.ctx.account.get(self.account_id)
-        raw = response.get('account')
-        return raw.dict()
-
-    # /v3/accounts/{accountID}/summary
-    def get_account_summary(self):
-        """ Returns summary for Account"""
-        response = self.ctx.account.summary(self.account_id)
-        raw = response.get('account')
-        return raw.dict()
-    #
-    # def get_open_trades(self):
-    #     # /v3/accounts/{accountID}/openTrades
-    #     response = requests.get(api_url + '/v3/accounts/' + account_id + '/openTrades')
-    #
-    #     return response
-    #     # list of trade objects
-    #     # trades = []
-    #     # return trades
-
     def get_history(self, instrument, start, end,
                     granularity, price, localize=True):
         """ Retrieves historical data for instrument.
@@ -196,19 +173,6 @@ class Oanda(object):
             data.index = data.index.tz_localize(None)
 
         return data[['o', 'h', 'l', 'c', 'volume', 'complete']]
-
-    # /v3/accounts/{accountID}/instruments
-    def get_instruments(self):
-        """ Get the list of tradeable instruments for the given Account.
-        The list of tradeable instruments is dependent on the regulatory
-        division that the Account is located in, thus should be the same
-        for all Accounts owned by a single user. """
-        resp = self.ctx.account.instruments(self.account_id)
-        instruments = resp.get('instruments')
-        instruments = [ins.dict() for ins in instruments]
-        instruments = [(ins['displayName'], ins['name'])
-                       for ins in instruments]
-        return sorted(instruments)
 
     # /v3/accounts/{accountID}/openPositions
     def get_positions(self):
