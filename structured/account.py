@@ -1,5 +1,5 @@
-# import oanda
-from structured import oanda
+import oanda
+# from structured import oanda # must be uncommented to run pytest
 
 
 class Account(oanda.Oanda):

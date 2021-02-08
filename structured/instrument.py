@@ -2,7 +2,7 @@ import oanda
 import pandas as pd
 import datetime
 
-from enums.instrument import CandlestickGranularity
+from enums.instrument import CandlestickGranularity, InstrumentName, PricingComponent
 
 
 class Instrument(oanda.Oanda):
@@ -11,48 +11,74 @@ class Instrument(oanda.Oanda):
     def __init__(self, conf_file):
         super().__init__(conf_file)
 
-    # /v3/instruments/{instrument}/candles
-    def retrieve_data(self, instrument, granularity, price):
-        raw = self.ctx.instrument.candles(
-            instrument=instrument,
-            # fromTime=start, toTime=end,
-            granularity=granularity, price=price)
-        candles_raw = raw.get('candles')
-        candles = [cs.dict() for cs in candles_raw]
-        instrument = raw.get('instrument')
-        granularity = raw.get('granularity')
-        return instrument, granularity, candles
+    def get_candlestick_data_for_instrument(self, instrument, **kwargs):
+        """
 
-        # if price == 'A':
-        #     for cs in raw:
-        #         cs.update(cs['ask'])
-        #         del cs['ask']
-        # elif price == 'B':
-        #     for cs in raw:
-        #         cs.update(cs['bid'])
-        #         del cs['bid']
-        # elif price == 'M':
-        #     for cs in raw:
-        #         cs.update(cs['mid'])
-        #         del cs['mid']
-        # else:
-        #     raise ValueError("price must be either 'B', 'A' or 'M'.")
-        # if len(raw) == 0:
-        #     return pd.DataFrame()  # return empty DataFrame if no data
-        # data = pd.DataFrame(raw)
-        # data['time'] = pd.to_datetime(data['time'])
-        # data = data.set_index('time')
-        # data.index = pd.DatetimeIndex(data.index)
-        # for col in list('ohlc'):
-        #     data[col] = data[col].astype(float)
-        # return data
+        :param instrument: InstrumentName(enum.Enum) (required)
 
+        Kwargs:
+            price:
+                The Price component(s) to get candlestick data for. Can contain
+                any combination of the characters "M" (midpoint candles) "B"
+                (bid candles) and "A" (ask candles).
+            granularity:
+                The granularity of the candlesticks to fetch
+            count:
+                The number of candlesticks to return in the reponse. Count
+                should not be specified if both the start and end parameters
+                are provided, as the time range combined with the graularity
+                will determine the number of candlesticks to return.
+            fromTime:
+                The start of the time range to fetch candlesticks for.
+            toTime:
+                The end of the time range to fetch candlesticks for.
+            smooth:
+                A flag that controls whether the candlestick is "smoothed" or
+                not.  A smoothed candlestick uses the previous candle's close
+                price as its open price, while an unsmoothed candlestick uses
+                the first price from its time range as its open price.
+            includeFirst:
+                A flag that controls whether the candlestick that is covered by
+                the from time should be included in the results. This flag
+                enables clients to use the timestamp of the last completed
+                candlestick received to poll for future candlesticks but avoid
+                receiving the previous candlestick repeatedly.
+            dailyAlignment:
+                The hour of the day (in the specified timezone) to use for
+                granularities that have daily alignments.
+            alignmentTimezone:
+                The timezone to use for the dailyAlignment parameter.
+                Candlesticks with daily alignment will be aligned to the
+                dailyAlignment hour within the alignmentTimezone.  Note that
+                the returned times will still be represented in UTC.
+            weeklyAlignment:
+                The day of the week used for granularities that have weekly
+                alignment.
 
-# start = datetime.datetime(2005, 5, 30)
-# end = datetime.datetime(2010, 5, 17)
+        :endpoint /v3/instruments/{instrument}/candles
+        :return:
+        """
+
+        response = self.ctx.instrument.candles(
+            instrument, **kwargs)
+
+        print('HTTP response status:', response.status)
+        print('HTTP response headers:', response.headers)
+        print('HTTP response body:', response.body)
+
+        candles = [cs.dict() for cs in response.get('candles')]
+
+        # returning df for testing right now, will remove
+        dataframe = pd.DataFrame(response.get('candles'))
+
+        return InstrumentName[instrument], \
+            candles, \
+            dataframe
+
 
 x = Instrument('oanda.cfg')
-print(x.retrieve_data('EUR_USD', 'S5', 'M'))
-print(CandlestickGranularity.H1)
-print(repr(CandlestickGranularity.H1))
-print(type(CandlestickGranularity.H1.name))
+
+print(x.get_candlestick_data_for_instrument(InstrumentName.CAD_JPY.name,
+                                            granularity=CandlestickGranularity.M1.name,
+                                            price=PricingComponent.BA.name,
+                                            fromTime='2016-10-17'))
