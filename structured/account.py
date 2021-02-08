@@ -1,4 +1,5 @@
-import oanda
+# import oanda
+from structured import oanda
 
 
 class Account(oanda.Oanda):
