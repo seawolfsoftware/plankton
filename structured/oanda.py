@@ -128,51 +128,51 @@ class Oanda(object):
         if ret is True:
             return order.dict()
 
-    def get_history(self, instrument, start, end,
-                    granularity, price, localize=True):
-        """ Retrieves historical data for instrument.
-        Parameters
-        ==========
-        instrument: string
-            valid instrument name
-        start, end: datetime, str
-            Python datetime or string objects for start and end
-        granularity: string
-            a string like 'S5', 'M1' or 'D'
-        price: string
-            one of 'A' (ask), 'B' (bid) or 'M' (middle)
-        Returns
-        =======
-        data: pd.DataFrame
-            pandas DataFrame object with data
-        """
-        if granularity.startswith('S') or granularity.startswith('M'):
-            if granularity.startswith('S'):
-                freq = '1h'
-            else:
-                freq = 'D'
-            data = pd.DataFrame()
-            dr = pd.date_range(start, end, freq=freq)
-
-            for t in range(len(dr)):
-                batch_start = self.transform_datetime(dr[t])
-                if t != len(dr) - 1:
-                    batch_end = self.transform_datetime(dr[t + 1])
-                else:
-                    batch_end = self.transform_datetime(end)
-
-                batch = self.retrieve_data(instrument, batch_start, batch_end,
-                                           granularity, price)
-                data = data.append(batch)
-        else:
-            start = self.transform_datetime(start)
-            end = self.transform_datetime(end)
-            data = self.retrieve_data(instrument, start, end,
-                                      granularity, price)
-        if localize:
-            data.index = data.index.tz_localize(None)
-
-        return data[['o', 'h', 'l', 'c', 'volume', 'complete']]
+    # def get_history(self, instrument, start, end,
+    #                 granularity, price, localize=True):
+    #     """ Retrieves historical data for instrument.
+    #     Parameters
+    #     ==========
+    #     instrument: string
+    #         valid instrument name
+    #     start, end: datetime, str
+    #         Python datetime or string objects for start and end
+    #     granularity: string
+    #         a string like 'S5', 'M1' or 'D'
+    #     price: string
+    #         one of 'A' (ask), 'B' (bid) or 'M' (middle)
+    #     Returns
+    #     =======
+    #     data: pd.DataFrame
+    #         pandas DataFrame object with data
+    #     """
+    #     if granularity.startswith('S') or granularity.startswith('M'):
+    #         if granularity.startswith('S'):
+    #             freq = '1h'
+    #         else:
+    #             freq = 'D'
+    #         data = pd.DataFrame()
+    #         dr = pd.date_range(start, end, freq=freq)
+    #
+    #         for t in range(len(dr)):
+    #             batch_start = self.transform_datetime(dr[t])
+    #             if t != len(dr) - 1:
+    #                 batch_end = self.transform_datetime(dr[t + 1])
+    #             else:
+    #                 batch_end = self.transform_datetime(end)
+    #
+    #             batch = self.retrieve_data(instrument, batch_start, batch_end,
+    #                                        granularity, price)
+    #             data = data.append(batch)
+    #     else:
+    #         start = self.transform_datetime(start)
+    #         end = self.transform_datetime(end)
+    #         data = self.retrieve_data(instrument, start, end,
+    #                                   granularity, price)
+    #     if localize:
+    #         data.index = data.index.tz_localize(None)
+    #
+    #     return data[['o', 'h', 'l', 'c', 'volume', 'complete']]
 
     # /v3/accounts/{accountID}/openPositions
     def get_positions(self):
@@ -227,37 +227,37 @@ class Oanda(object):
             except Exception:
                 pass
 
-    # /v3/accounts/{accountID}/instruments/{instrument}/candles
-    def retrieve_data(self, instrument, start, end, granularity, price):
-        raw = self.ctx.instrument.candles(
-            instrument=instrument,
-            fromTime=start, toTime=end,
-            granularity=granularity, price=price)
-        raw = raw.get('candles')
-        raw = [cs.dict() for cs in raw]
-        if price == 'A':
-            for cs in raw:
-                cs.update(cs['ask'])
-                del cs['ask']
-        elif price == 'B':
-            for cs in raw:
-                cs.update(cs['bid'])
-                del cs['bid']
-        elif price == 'M':
-            for cs in raw:
-                cs.update(cs['mid'])
-                del cs['mid']
-        else:
-            raise ValueError("price must be either 'B', 'A' or 'M'.")
-        if len(raw) == 0:
-            return pd.DataFrame()  # return empty DataFrame if no data
-        data = pd.DataFrame(raw)
-        data['time'] = pd.to_datetime(data['time'])
-        data = data.set_index('time')
-        data.index = pd.DatetimeIndex(data.index)
-        for col in list('ohlc'):
-            data[col] = data[col].astype(float)
-        return data
+    # # /v3/accounts/{accountID}/instruments/{instrument}/candles
+    # def retrieve_data(self, instrument, start, end, granularity, price):
+    #     raw = self.ctx.instrument.candles(
+    #         instrument=instrument,
+    #         fromTime=start, toTime=end,
+    #         granularity=granularity, price=price)
+    #     raw = raw.get('candles')
+    #     raw = [cs.dict() for cs in raw]
+    #     if price == 'A':
+    #         for cs in raw:
+    #             cs.update(cs['ask'])
+    #             del cs['ask']
+    #     elif price == 'B':
+    #         for cs in raw:
+    #             cs.update(cs['bid'])
+    #             del cs['bid']
+    #     elif price == 'M':
+    #         for cs in raw:
+    #             cs.update(cs['mid'])
+    #             del cs['mid']
+    #     else:
+    #         raise ValueError("price must be either 'B', 'A' or 'M'.")
+    #     if len(raw) == 0:
+    #         return pd.DataFrame()  # return empty DataFrame if no data
+    #     data = pd.DataFrame(raw)
+    #     data['time'] = pd.to_datetime(data['time'])
+    #     data = data.set_index('time')
+    #     data.index = pd.DatetimeIndex(data.index)
+    #     for col in list('ohlc'):
+    #         data[col] = data[col].astype(float)
+    #     return data
 
     # /v3/accounts/{accountID}/pricing/stream
     def stream_data(self, instrument, stop=None, ret=False):
