@@ -16,7 +16,11 @@ class PricingComponent(enum.Enum):
     M = "M",
     B = "B",
     A = "A",
-    BA = "BA"
+    MB = "MB",
+    MA = "MA",
+    BA = "BA",
+    MBA = "MBA"
+
 
 
 class CandlestickGranularity(enum.Enum):

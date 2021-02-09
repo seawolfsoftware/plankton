@@ -9,7 +9,7 @@ from v20.transaction import TrailingStopLossDetails, TakeProfitDetails
 class Oanda(object):
     """ Oanda is a Python wrapper class for the Oanda v20 API. """
 
-    def __init__(self, conf_file):
+    def __init__(self):
         """ Init function is expecting a configuration file with
         the following content:
         [oanda]
@@ -22,8 +22,9 @@ class Oanda(object):
             path to and filename of the configuration file,
             e.g. '/home/me/oanda.cfg'
         """
+        self.conf_file = 'oanda.cfg'
         self.config = configparser.ConfigParser()
-        self.config.read(conf_file)
+        self.config.read(self.conf_file)
         self.access_token = self.config['oanda']['access_token']
         self.account_id = self.config['oanda']['account_id']
         self.account_type = self.config['oanda']['account_type']

@@ -1,6 +1,7 @@
 import oanda
 import pandas as pd
 import datetime
+from pylab import mpl, plt
 
 from enums.instrument import CandlestickGranularity, InstrumentName, PricingComponent
 
@@ -8,8 +9,8 @@ from enums.instrument import CandlestickGranularity, InstrumentName, PricingComp
 class Instrument(oanda.Oanda):
     """ Instrument is a Python wrapper class for instrument.py in Oanda v20 REST API. """
 
-    def __init__(self, conf_file):
-        super().__init__(conf_file)
+    def __init__(self):
+        super().__init__()
 
     def get_candlestick_data_for_instrument(self, instrument, **kwargs):
         """
@@ -24,9 +25,9 @@ class Instrument(oanda.Oanda):
             granularity:
                 The granularity of the candlesticks to fetch
             count:
-                The number of candlesticks to return in the reponse. Count
+                The number of candlesticks to return in the response. Count
                 should not be specified if both the start and end parameters
-                are provided, as the time range combined with the graularity
+                are provided, as the time range combined with the granularity
                 will determine the number of candlesticks to return.
             fromTime:
                 The start of the time range to fetch candlesticks for.
@@ -62,9 +63,9 @@ class Instrument(oanda.Oanda):
         response = self.ctx.instrument.candles(
             instrument, **kwargs)
 
-        print('HTTP response status:', response.status)
-        print('HTTP response headers:', response.headers)
-        print('HTTP response body:', response.body)
+        # print('HTTP response status:', response.status)
+        # print('HTTP response headers:', response.headers)
+        # print('HTTP response body:', response.body)
 
         candles = [cs.dict() for cs in response.get('candles')]
 
@@ -76,9 +77,34 @@ class Instrument(oanda.Oanda):
             dataframe
 
 
-x = Instrument('oanda.cfg')
+x = Instrument()
 
-print(x.get_candlestick_data_for_instrument(InstrumentName.CAD_JPY.name,
-                                            granularity=CandlestickGranularity.M1.name,
-                                            price=PricingComponent.BA.name,
-                                            fromTime='2016-10-17'))
+y, z, df = \
+    x.get_candlestick_data_for_instrument(InstrumentName.CAD_JPY.name,
+                                          granularity=CandlestickGranularity.M1.name,
+                                          price=PricingComponent.BA.name,
+                                          fromTime='2016-10-17',
+                                          toTime='2016-10-20')
+
+plt.style.use('seaborn')
+# df['SMA1-shorter'] = df[0][0].bid
+
+# The first (open) price in the time-range represented by the
+# candlestick.
+print(df[0][0].bid.o)
+
+# The highest price in the time-range represented by the candlestick.
+print(df[0][0].bid.h)
+
+# The lowest price in the time-range represented by the candlestick.
+print(df[0][0].bid.l)
+
+# The last (closing) price in the time-range represented by the
+# candlestick.
+print(df[0][0].bid.c)
+
+# df['SMA2-longer'] = df['price'].rolling(252).mean()
+
+
+# df.plot(title='EUR/USD | 42 & 252 days SMAs', figsize=(10, 6))
+# plt.show()
